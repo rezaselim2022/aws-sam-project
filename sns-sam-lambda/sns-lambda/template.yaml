@@ -170,5 +170,5 @@ Outputs:
     Value: !Ref DynamoDBStreamProcessorFunction
 
   MSTeamProcessorFunction:
-    Description: "Name of the MS Team Lambda function to Trigger the data from destination SNS topic to MS Team through Webhook"
+    Description: "Name of the MS Team Lambda function to Trigger the data from destination SNS topic to Microsoft Team through Webhook"
     Value: !Ref MSTeamProcessorLambdaFunction
