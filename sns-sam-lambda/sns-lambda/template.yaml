@@ -1,0 +1,174 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  sns-lambda
+
+  Sample SAM Template for sns-lambda
+
+Parameters:
+  TopicArn:
+    Type: String
+    Description: "Provide the SNS Topic ARN to subscribe the Lambda function"
+
+  SqsArn:
+    Type: String
+    Description: "Provide the SQS Queue ARN to trigger message from AWS SNS Topic through the Lambda function"
+
+  DynamoDBtableArn:
+    Type: String
+    Description: "Provide the dynamodb table ARN to store the data from AWS SNS Topic through the Lambda Function"
+
+  DynamoDBTableStreamArn:  
+    Type: String
+    Description: "Provide the Dynamodb Stream ARN to trigger the Dynamodb Stream data though the lambda Function"
+  DestinationSNSTopicArn: 
+    Type: String
+    Description: "Provide the Another SNS Topic ARN as a Lambda function Destination. "  
+
+  TeamsWebhookURL:                              
+    Type: String
+    Description: "Provide the Microsoft Teams Webhook URL for sending notifications through the lambda function from SNS Topic"
+
+  SendMessageFunctionRoleArn:                              
+    Type: String
+    Description: "Provide the IAM Role ARN for send message lambda funciton"
+
+  SQSLambdaFunctionRoleArn:
+    Type: String
+    Description: "Provide the SQS Queue IAM role ARN for SQS Lambda funciton"
+
+  DynamoDBTableLambdaFunctionRoleArn:
+    Type: String
+    Description: "Provide the DynamoDB Table IAM Role ARN for DynamoDB Table Lambda Function to keep record of message sent to SNS Topic"
+
+  DynamoDBStreamIAMRoleArn:
+    Type: String
+    Description: "Provide the DynamoDB Stream IAM Role ARN for DynamoDB Stream Lambda Function to keep the track items."
+
+  MSTeamProcessorIAMRoleArn:
+    Type: String
+    Description: "Provide the MS Team Processor IAM Role ARN MS Team Lambda Function to use ms team webhook  to send message to teams channel"
+
+
+
+
+Resources:
+  # Lambda Function
+  MyLambdaFunction:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      CodeUri: hello_world/  # Path to your Lambda function code directory
+      Policies:
+      - AWSLambdaBasicExecutionRole
+      - AmazonSNSFullAccess
+        
+      Events:
+        SnsSubscription:
+          Type: SNS  # Event type is SNS
+          Properties:
+            Topic: !Ref TopicArn  # Use the SNS Topic ARN directly
+
+  SendMessageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: sendMessageSNSTopic.lambda_handler
+      Runtime: python3.9
+      CodeUri: hello_world/
+      Role: !Ref SendMessageFunctionRoleArn
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Ref TopicArn
+     
+
+  SqsLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: triggermessagefromsqs.lambda_handler
+      Runtime: python3.9
+      CodeUri: hello_world/
+      Role: !Ref SQSLambdaFunctionRoleArn
+      Events:
+        SQSEvent:
+          Type: SQS
+          Properties:
+            Queue: !Ref SqsArn   
+
+  StoreDataDynamoDBTableFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: storedataDBtableFromsnsTopic.lambda_handler
+      Runtime: python3.9
+      CodeUri: hello_world/ # Directory containing Lambda code
+      Role: !Ref DynamoDBTableLambdaFunctionRoleArn
+      Environment:
+        Variables:
+          TABLE_NAME: CloudFormationDBTable  #  DynamoDB table name
+      Events:
+        SNSEvent:
+          Type: SNS
+          Properties:
+            Topic: !Ref TopicArn   
+
+  DynamoDBStreamProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: DynamoDBStreamTriggerAndNotifySNSTopic.lambda_handler
+      Runtime: python3.9
+      CodeUri: hello_world/
+      Role: !Ref DynamoDBStreamIAMRoleArn
+      Events:
+        DynamoDBStreamEvent:
+          Type: DynamoDB
+          Properties:
+            Stream: !Ref DynamoDBTableStreamArn
+            BatchSize: 100
+            StartingPosition: TRIM_HORIZON
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Ref DestinationSNSTopicArn
+
+  MSTeamProcessorLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: msteamLambdaFunction.lambda_handler               
+      Runtime: python3.9
+      CodeUri: hello_world/  
+      Role: !Ref MSTeamProcessorIAMRoleArn
+      Events:
+        SNSEvent:                               # Define SNS trigger
+          Type: SNS
+          Properties:
+            Topic: !Ref DestinationSNSTopicArn
+      Environment:                              
+        Variables:
+          TEAMS_WEBHOOK_URL: !Ref TeamsWebhookURL
+
+           
+
+
+Outputs:
+  LambdaFunctionName:
+    Description: "Name of the Lambda function"
+    Value: !Ref MyLambdaFunction
+
+  SendMessageFunction:
+    Description: "Name of the send message lambda function"
+    Value: !Ref SendMessageFunction  
+
+  SqsLambdaFunction:
+    Description: "Name of the trigger message from aws SQS lambda function" 
+    Value: !Ref SqsLambdaFunction 
+
+  StoreDataDynamoDBTableFunction:
+    Description: "Name of the store data DynamoDB Table from sns topic lambda function"
+    Value: !Ref StoreDataDynamoDBTableFunction
+
+  DynamoDBStreamProcessorFunction:
+    Description: "Name of the DynamoDB Stream Lambda function to Trigger DBStream Data and destination to SNS topic"
+    Value: !Ref DynamoDBStreamProcessorFunction
+
+  MSTeamProcessorFunction:
+    Description: "Name of the MS Team Lambda function to Trigger the data from destination SNS topic to MS Team through Webhook"
+    Value: !Ref MSTeamProcessorLambdaFunction

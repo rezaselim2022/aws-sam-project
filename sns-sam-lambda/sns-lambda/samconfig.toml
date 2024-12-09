@@ -1,0 +1,35 @@
+# More information about the configuration file can be found here:
+# https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-config.html
+version = 0.1
+
+[default.global.parameters]
+stack_name = "sns-lambda"
+
+[default.build.parameters]
+cached = true
+parallel = true
+
+[default.validate.parameters]
+lint = true
+
+[default.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+resolve_s3 = true
+stack_name = "first-sam-test-stack"
+s3_prefix = "first-sam-test-stack"
+region = "us-east-1"
+parameter_overrides = "TopicArn=\"arn:aws:sns:us-east-1:211125452385:sam-test-topic\" SqsArn=\"arn:aws:sqs:us-east-1:211125452385:sam-test-sqs\" DynamoDBtableArn=\"arn:aws:dynamodb:us-east-1:211125452385:table/CloudFormationDBTable\" DynamoDBTableStreamArn=\"arn:aws:dynamodb:us-east-1:211125452385:table/CloudFormationDBTable/stream/2024-11-29T01:39:20.845\" DestinationSNSTopicArn=\"arn:aws:sns:us-east-1:211125452385:Sam-DestinationSNSTopic\" TeamsWebhookURL=\"https://kennesawedu.webhook.office.com/webhookb2/3f69a37b-a83e-4a91-ab54-d6110b7922f5@45f26ee5-f134-439e-bc93-e6c7e33d61c2/IncomingWebhook/b2c81a2659b0499e86e447ae3f50120c/a090c6e6-30ad-44d3-b327-aff370ba7d5c/V2X-5XQY3Pd__KALhY9zzUboVXOrH8jMWTg6oIPSJDJaI1\" SendMessageFunctionRoleArn=\"arn:aws:iam::211125452385:role/SAM-send-message-function-IAM-Role\" SQSLambdaFunctionRoleArn=\"arn:aws:iam::211125452385:role/SAM-SQSQueueExecution-ROLe\" DynamoDBTableLambdaFunctionRoleArn=\"arn:aws:iam::211125452385:role/DynamoDBTable-CloudFormationDBTable-IAM-Role\" DynamoDBStreamIAMRoleArn=\"arn:aws:iam::211125452385:role/SAM-DynamoDB-Stream-Lambda-Role\" MSTeamProcessorIAMRoleArn=\"arn:aws:iam::211125452385:role/SAM-MSTeam_LambdaFunction_IAM_Role\""
+image_repositories = []
+
+[default.package.parameters]
+resolve_s3 = true
+
+[default.sync.parameters]
+watch = true
+
+[default.local_start_api.parameters]
+warm_containers = "EAGER"
+
+[default.local_start_lambda.parameters]
+warm_containers = "EAGER"
